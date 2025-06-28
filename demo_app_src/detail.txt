@@ -1,0 +1,46 @@
+hotel_management_app/
+├── .venv/                   # Môi trường ảo Python
+├── app.py                   # Điểm khởi chạy chính của ứng dụng Flask
+├── config.py                # Cấu hình ứng dụng (ví dụ: database URI, secret key)
+├── instance/                # Chứa các file cấu hình nhạy cảm hoặc không cần commit
+│   └── config.py            # Cấu hình cụ thể cho instance (ví dụ: database cục bộ)
+├── static/                  # Chứa các file tĩnh (CSS, JavaScript, hình ảnh)
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   └── script.js
+│   └── img/
+│       └── logo.png
+├── templates/               # Chứa các file template HTML (Jinja2)
+│   ├── base.html            # Template cơ sở cho tất cả các trang
+│   ├── index.html           # Trang chủ
+│   ├── hotels/
+│   │   ├── list.html        # Danh sách khách sạn
+│   │   ├── detail.html      # Chi tiết khách sạn
+│   │   └── create.html      # Tạo khách sạn mới
+│   ├── rooms/
+│   │   ├── list.html        # Danh sách phòng
+│   │   └── ...
+│   └── auth/
+│       ├── login.html       # Trang đăng nhập
+│       └── register.html    # Trang đăng ký
+├── routes/                  # Chứa các blueprint và định nghĩa route
+│   ├── __init__.py          # Khởi tạo blueprint
+│   ├── auth.py              # Routes liên quan đến xác thực (đăng nhập, đăng ký)
+│   ├── hotel.py             # Routes liên quan đến quản lý khách sạn
+│   ├── room.py              # Routes liên quan đến quản lý phòng
+│   └── main.py              # Routes chung (trang chủ)
+├── models/                  # Chứa định nghĩa các mô hình cơ sở dữ liệu (sử dụng SQLAlchemy, Peewee, etc.)
+│   ├── __init__.py
+│   ├── user.py              # Mô hình người dùng
+│   ├── hotel.py             # Mô hình khách sạn
+│   ├── room.py              # Mô hình phòng
+│   └── booking.py           # Mô hình đặt phòng
+├── forms/                   # Chứa định nghĩa các form (sử dụng Flask-WTF)
+│   ├── __init__.py
+│   ├── hotel_form.py
+│   ├── room_form.py
+│   └── auth_form.py
+├── extensions.py            # Khởi tạo các extension của Flask (ví dụ: SQLAlchemy, LoginManager)
+├── requirements.txt         # Danh sách các gói Python cần thiết
+└── README.md                # Mô tả dự án và hướng dẫn cài đặt

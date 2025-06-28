@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi tiết đặt phòng {{ booking.booking_id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-info-circle"></i> Chi tiết đặt phòng ID: {{ booking.booking_id }}</h3>
+            </div>
+            <div class="card-body">
+                {% if booking_details %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h5>Thông tin đặt phòng</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><strong>Khách hàng:</strong> {{ booking_details.customer_name }}</li>
+                            <li class="list-group-item"><strong>Phòng:</strong> {{ booking_details.room_number }} ({{ booking_details.room_type }})</li>
+                            <li class="list-group-item"><strong>Ngày nhận phòng:</strong> {{ booking_details.check_in_date.strftime('%d/%m/%Y') }}</li>
+                            <li class="list-group-item"><strong>Ngày trả phòng:</strong> {{ booking_details.check_out_date.strftime('%d/%m/%Y') }}</li>
+                            <li class="list_group-item"><strong>Số đêm:</strong> {{ booking_details.nights }}</li>
+                            <li class="list_group-item"><strong>Giá phòng / đêm:</strong> {{ "{:,.0f}".format(booking_details.room_price) }} VNĐ</li>
+                            <li class="list_group-item"><strong>Mã khuyến mãi:</strong> {{ booking_details.promotion_name or 'Không áp dụng' }}</li>
+                            <li class="list_group-item"><strong>Yêu cầu đặc biệt:</strong> {{ booking.special_requests or 'Không có' }}</li>
+                            <li class="list_group-item"><strong>Trạng thái Booking:</strong>
+                                {% if booking.status == 0 %} <span class="badge bg-warning text-dark">Đã Hủy</span>
+                                {% elif booking.status == 1 %} <span class="badge bg-success">Đã Xác nhận</span>
+                                {% elif booking.status == 2 %} <span class="badge bg-primary">Đã Check-in</span>
+                                {% elif booking.status == 3 %} <span class="badge bg-info text-dark">Đã Check-out</span>
+                                {% elif booking.status == 4 %} <span class="badge bg-danger">Chờ duyệt</span>
+                                {% else %} <span class="badge bg-secondary">Không rõ</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Thông tin hóa đơn</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><strong>Tổng tiền phòng:</strong> {{ "{:,.0f}".format(booking_details.total_room_amount) }} VNĐ</li>
+                            <li class="list-group-item"><strong>Phí dịch vụ:</strong> {{ "{:,.0f}".format(booking_details.service_charges) }} VNĐ</li>
+                            <li class="list-group-item"><strong>Thuế (10%):</strong> {{ "{:,.0f}".format(booking_details.tax_amount) }} VNĐ</li>
+                            <li class="list-group-item"><strong>Giảm giá:</strong> {{ "{:,.0f}".format(booking_details.discount_amount) }} VNĐ</li>
+                            <li class="list-group-item"><strong>Tổng cộng cuối cùng:</strong> <span class="fw-bold fs-5 text-success">{{ "{:,.0f}".format(booking_details.final_amount) }} VNĐ</span></li>
+                            <li class="list-group-item"><strong>Trạng thái thanh toán:</strong>
+                                {% if booking_details.payment_status == 0 %} <span class="badge bg-warning text-dark">Chờ thanh toán</span>
+                                {% elif booking_details.payment_status == 1 %} <span class="badge bg-success">Đã thanh toán</span>
+                                {% elif booking_details.payment_status == 2 %} <span class="badge bg-info text-dark">Đã hoàn tiền</span>
+                                {% else %} <span class="badge bg-secondary">Không rõ</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h5>Các dịch vụ đã thêm</h5>
+                {% if services %}
+                <ul class="list-group mb-3">
+                    {% for service in services %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ service.service_name }}</strong> ({{ service.service_type }})
+                            <br><small>{{ service.description or 'Không có mô tả' }}</small>
+                        </div>
+                        <span class="badge bg-info text-dark">{{ "{:,.0f}".format(service.price) }} VNĐ</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="alert alert-secondary">Chưa có dịch vụ nào được thêm vào đặt phòng này.</div>
+                {% endif %}
+
+                <hr>
+
+                {% if booking.status == 1 %} {# Chỉ cho phép thêm dịch vụ và hủy nếu booking đang "Đã xác nhận" (status = 1) #}
+                <h5 class="mb-3">Thêm dịch vụ mới</h5>
+                <form method="POST" action="{{ url_for('main.booking_details', booking_id=booking.booking_id) }}">
+                    {{ add_service_form.csrf_token }}
+
+                    <div class="mb-3">
+                        {{ add_service_form.service_name.label(class="form-label") }}
+                        {{ add_service_form.service_name(class="form-control") }}
+                        {% if add_service_form.service_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in add_service_form.service_name.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ add_service_form.service_description.label(class="form-label") }}
+                        {{ add_service_form.service_description(class="form-control", rows="2") }}
+                        {% if add_service_form.service_description.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in add_service_form.service_description.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ add_service_form.service_price.label(class="form-label") }}
+                        {{ add_service_form.service_price(class="form-control", type="number", step="0.01") }}
+                        {% if add_service_form.service_price.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in add_service_form.service_price.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ add_service_form.service_type.label(class="form-label") }}
+                        {{ add_service_form.service_type(class="form-control", placeholder="VD: ADDITIONAL, FOOD, DRINK") }}
+                        {% if add_service_form.service_type.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in add_service_form.service_type.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {{ add_service_form.submit_service(class="btn btn-primary") }}
+                </form>
+
+                <hr>
+
+                <h5 class="mb-3 text-danger">Hủy đặt phòng</h5>
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> Lưu ý: Việc hủy đặt phòng không được hoàn tiền.
+                    Hành động này không thể hoàn tác.
+                </div>
+                <form method="POST" action="{{ url_for('main.booking_details', booking_id=booking.booking_id) }}">
+                    {{ cancel_form.csrf_token }}
+                    <div class="mb-3">
+                        {{ cancel_form.cancellation_reason.label(class="form-label") }}
+                        {{ cancel_form.cancellation_reason(class="form-control", placeholder="Vui lòng cho biết lý do hủy phòng của bạn") }}
+                        {% if cancel_form.cancellation_reason.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in cancel_form.cancellation_reason.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {{ cancel_form.submit_cancel(class="btn btn-danger") }}
+                </form>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    Bạn không thể thêm dịch vụ hoặc hủy đặt phòng này do trạng thái hiện tại ({{ booking.status_name_here_if_you_have_it }}).
+                </div>
+                {% endif %}
+
+
+                {% else %}
+                <div class="alert alert-danger text-center" role="alert">
+                    <h4 class="alert-heading"><i class="fas fa-exclamation-circle"></i> Lỗi!</h4>
+                    <p>Không thể tải chi tiết đặt phòng hoặc hóa đơn. Vui lòng thử lại.</p>
+                </div>
+                {% endif %}
+
+                <hr>
+                <a href="{{ url_for('main.my_bookings') }}" class="btn btn-secondary mt-3"><i class="fas fa-arrow-left"></i> Quay lại danh sách đặt phòng</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

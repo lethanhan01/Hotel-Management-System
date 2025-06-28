@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Đặt phòng của tôi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-book-open"></i> Các đặt phòng của tôi</h2>
+    </div>
+</div>
+
+{% if bookings %}
+<div class="list-group">
+    {% for booking in bookings %}
+    <a href="{{ url_for('main.booking_details', booking_id=booking.booking_id) }}" class="list-group-item list-group-item-action mb-2 shadow-sm rounded">
+        <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">Booking ID: {{ booking.booking_id }} - Phòng: {{ booking.room.room_number }} ({{ booking.room.room_type }})</h5>
+            <small class="text-muted">Đặt ngày: {{ booking.booking_date.strftime('%d/%m/%Y') }}</small>
+        </div>
+        <p class="mb-1">Check-in: {{ booking.check_in_date.strftime('%d/%m/%Y') }} | Check-out: {{ booking.check_out_date.strftime('%d/%m/%Y') }}</p>
+        <small>Trạng thái:
+            {% if booking.status == 0 %} <span class="badge bg-warning text-dark">Đã hủy</span>
+            {% elif booking.status == 1 %} <span class="badge bg-success">Đã xác nhận</span>
+            {% endif %}
+        </small>
+        {% if booking.invoice %}
+        <br><small>Tổng tiền hóa đơn: {{ "{:,.0f}".format(booking.invoice.final_amount) }} $</small>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info text-center" role="alert">
+    <h4 class="alert-heading"><i class="fas fa-info-circle"></i> Bạn chưa có đặt phòng nào.</h4>
+    <p>Hãy <a href="{{ url_for('main.list_rooms') }}">đặt phòng</a> ngay!</p>
+</div>
+{% endif %}
+
+<div class="mt-4 text-center">
+    <a href="{{ url_for('main.profile') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Quay lại Hồ sơ</a>
+</div>
+{% endblock %}
