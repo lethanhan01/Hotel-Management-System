@@ -9,17 +9,17 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
 
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:admin@localhost:5432/hotel_management2'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:admin@localhost:5432/hotel_management'
     SQLALCHEMY_TRACK_MODIFICATIONS = False 
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:admin@localhost:5432/hotel_management2'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:admin@localhost:5432/hotel_management'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 class ProductionConfig(Config):
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:admin@localhost:5432/hotel_management2'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:admin@localhost:5432/hotel_management'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 config = {

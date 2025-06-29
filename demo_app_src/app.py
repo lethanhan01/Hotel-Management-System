@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
         if not Customer.query.filter_by(username='admin').first():
             admin_user = Customer(
-                customer_id=1501,
+                #customer_id=1501,
                 username='admin',
                 full_name='Admin User',
                 email='admin@example.com',
