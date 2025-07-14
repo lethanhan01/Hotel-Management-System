@@ -200,7 +200,7 @@ BEGIN
     UPDATE customer 
     SET 
         full_name = COALESCE(p_full_name, full_name),
-        phone_number = COALESCE(p_phone_number, pho	ne_number),
+        phone_number = COALESCE(p_phone_number, phone_number),
         email = COALESCE(p_email, email),
         nationality = COALESCE(p_nationality, nationality)
     WHERE customer_id = p_customer_id;
