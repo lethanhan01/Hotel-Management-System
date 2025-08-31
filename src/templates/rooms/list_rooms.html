@@ -105,7 +105,32 @@
                 {% for room in rooms %}
                 <div class="col-md-6 mb-4">
                     <div class="card h-100 shadow-sm">
-                        <img src="{{ url_for('static', filename='images/room_default.jpg') }}" class="card-img-top" alt="Room Image">
+                        {# Image selection logic:
+                           1) If `room.image_filename` provided, use it (user-assigned specific file)
+                           2) Otherwise, try a room-type specific JPG: images/<room_type_slug>.jpg
+                           3) Final fallback: one of the SVG illustrations (varied by room_id)
+                        #}
+                        {% set alt_text = (room.room_type ~ ' - Phòng ' ~ room.room_number) %}
+                        {% if room.image_filename %}
+                            <img loading="lazy" src="{{ url_for('static', filename='images/' ~ room.image_filename) }}" class="card-img-top room-img" data-fallback="{{ url_for('static', filename='images/room_default.svg') }}" alt="{{ alt_text }}">
+                        {% else %}
+                            {% set t = (room.room_type or '') | lower %}
+                            {% if 'deluxe' in t %}
+                                <img loading="lazy" src="{{ url_for('static', filename='images/Deluxe.jpg') }}" class="card-img-top room-img" data-fallback="{{ url_for('static', filename='images/room_default.svg') }}" alt="{{ alt_text }}">
+                            {% elif 'suite' in t %}
+                                <img loading="lazy" src="{{ url_for('static', filename='images/Suite.jpg') }}" class="card-img-top room-img" data-fallback="{{ url_for('static', filename='images/room_default.svg') }}" alt="{{ alt_text }}">
+                            {% elif 'single' in t %}
+                                <img loading="lazy" src="{{ url_for('static', filename='images/Single.jpg') }}" class="card-img-top room-img" data-fallback="{{ url_for('static', filename='images/room_default.svg') }}" alt="{{ alt_text }}">
+                            {% elif 'double' in t %}
+                                <img loading="lazy" src="{{ url_for('static', filename='images/Double.jpg') }}" class="card-img-top room-img" data-fallback="{{ url_for('static', filename='images/room_default.svg') }}" alt="{{ alt_text }}">
+                            {% elif 'standard' in t %}
+                                <img loading="lazy" src="{{ url_for('static', filename='images/Standard.jpg') }}" class="card-img-top room-img" data-fallback="{{ url_for('static', filename='images/room_default.svg') }}" alt="{{ alt_text }}">
+                            {% else %}
+                                {# fallback: try type-based jpg, else svg variant by id #}
+                                {% set type_slug = room.room_type | default('room') | replace(' ', '_') %}
+                                <img loading="lazy" src="{{ url_for('static', filename='images/' ~ type_slug ~ '.jpg') }}" class="card-img-top room-img" data-fallback="{{ url_for('static', filename='images/room_default.svg') }}" alt="{{ alt_text }}">
+                            {% endif %}
+                        {% endif %}
                         <div class="card-body">
                             <h5 class="card-title">{{ room.room_type }} - Phòng số {{ room.room_number }}</h5>
                             <p class="card-text">{{ room.description or 'Chưa có mô tả.' }}</p>
@@ -173,19 +198,21 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const checkInDate = document.getElementById('check_in_date');
-        const checkOutDate = document.getElementById('check_out_date');
-
-        checkInDate.addEventListener('change', function() {
-            if (this.value) {
-                checkOutDate.min = this.value;
-                if (checkOutDate.value < this.value) {
-                    checkOutDate.value = this.value; // Reset check_out_date if it's before check_in_date
+        var checkInDate = document.getElementById('check_in_date');
+        var checkOutDate = document.getElementById('check_out_date');
+        if (checkInDate && checkOutDate) {
+            checkInDate.addEventListener('change', function() {
+                if (this.value) {
+                    checkOutDate.min = this.value;
+                    if (checkOutDate.value < this.value) {
+                        checkOutDate.value = this.value; // Reset check_out_date if it's before check_in_date
+                    }
+                } else {
+                    checkOutDate.min = '{{ current_date_str }}';
                 }
-            } else {
-                checkOutDate.min = '{{ current_date_str }}';
-            }
-        });
+            });
+        }
     });
 </script>
+<script src="{{ url_for('static', filename='js/image-fallbacks.js') }}"></script>
 {% endblock %}
