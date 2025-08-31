@@ -19,11 +19,11 @@
                             <li class="list-group-item"><strong>Phòng:</strong> {{ booking_details.room_number }} ({{ booking_details.room_type }})</li>
                             <li class="list-group-item"><strong>Ngày nhận phòng:</strong> {{ booking_details.check_in_date.strftime('%d/%m/%Y') }}</li>
                             <li class="list-group-item"><strong>Ngày trả phòng:</strong> {{ booking_details.check_out_date.strftime('%d/%m/%Y') }}</li>
-                            <li class="list_group-item"><strong>Số đêm:</strong> {{ booking_details.nights }}</li>
-                            <li class="list_group-item"><strong>Giá phòng / đêm:</strong> {{ "{:,.0f}".format(booking_details.room_price) }} VNĐ</li>
-                            <li class="list_group-item"><strong>Mã khuyến mãi:</strong> {{ booking_details.promotion_name or 'Không áp dụng' }}</li>
-                            <li class="list_group-item"><strong>Yêu cầu đặc biệt:</strong> {{ booking.special_requests or 'Không có' }}</li>
-                            <li class="list_group-item"><strong>Trạng thái Booking:</strong>
+                            <li class="list-group-item"><strong>Số đêm:</strong> {{ booking_details.nights }}</li>
+                            <li class="list-group-item"><strong>Giá phòng / đêm:</strong> {{ "{:,.0f}".format(booking_details.room_price) }} VNĐ</li>
+                            <li class="list-group-item"><strong>Mã khuyến mãi:</strong> {{ booking_details.promotion_name or 'Không áp dụng' }}</li>
+                            <li class="list-group-item"><strong>Yêu cầu đặc biệt:</strong> {{ booking.special_requests or 'Không có' }}</li>
+                            <li class="list-group-item"><strong>Trạng thái Booking:</strong>
                                 {% if booking.status == 0 %} <span class="badge bg-warning text-dark">Đã Hủy</span>
                                 {% elif booking.status == 1 %} <span class="badge bg-success">Đã Xác nhận</span>
                                 {% elif booking.status == 2 %} <span class="badge bg-primary">Đã Check-in</span>
