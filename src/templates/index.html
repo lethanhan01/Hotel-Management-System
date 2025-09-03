@@ -1,23 +1,24 @@
 {% extends 'base.html' %}
 
-{% block title %}Trang chủ{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
 <div class="jumbotron text-center bg-light p-5 rounded shadow-sm">
-    <h1 class="display-4">Chào mừng đến với Hệ thống Quản lý Khách sạn của Nhóm 1!</h1>
+    <img src="{{ url_for('static', filename='images/logo2.svg') }}" style ="width: 200px;height: auto;" alt="Hotel image" class="img-fluid rounded mb-3 mx-auto d-block" />
+    <h1 class="display-4 fw-bold" >Welcome to the Hotel Management System</h1>
     <hr class="my-4">
     {% if current_user.is_authenticated %}
-        <p>Bạn đã đăng nhập với tên người dùng: <strong>{{ current_user.username }}</strong>.</p>
-        <p>Hãy khám phá các tính năng quản lý khách sạn.</p>
+    <p>You are logged in as: <strong>{{ current_user.username }}</strong>.</p>
+    <p>Explore the hotel management features available to you.</p>
         <p class="lead">
-            <a class="btn btn-primary btn-lg me-2" href="{{ url_for('main.profile') }}" role="button"><i class="fas fa-id-card"></i> Xem hồ sơ của bạn</a>
-            <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.logout') }}" role="button"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+            <a class="btn btn-primary btn-lg me-2" href="{{ url_for('main.profile') }}" role="button"><i class="fas fa-id-card"></i> View your profile</a>
+            <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.logout') }}" role="button"><i class="fas fa-sign-out-alt"></i> Log out</a>
         </p>
     {% else %}
-        <p>Vui lòng đăng nhập hoặc đăng ký để tiếp tục.</p>
+    <p>Please log in or register to continue.</p>
         <p class="lead">
-            <a class="btn btn-primary btn-lg me-2" href="{{ url_for('auth.login') }}" role="button"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a>
-            <a class="btn btn-success btn-lg" href="{{ url_for('auth.register') }}" role="button"><i class="fas fa-user-plus"></i> Đăng ký</a>
+            <a class="btn btn-primary btn-lg me-2" href="{{ url_for('auth.login') }}" role="button"><i class="fas fa-sign-in-alt"></i> Log in</a>
+            <a class="btn btn-success btn-lg" href="{{ url_for('auth.register') }}" role="button"><i class="fas fa-user-plus"></i> Register</a>
         </p>
     {% endif %}
 </div>

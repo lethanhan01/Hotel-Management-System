@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Đăng nhập{% endblock %}
+{% block title %}Log in{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card shadow-sm">
             <div class="card-header text-center bg-primary text-white">
-                <h3 class="mb-0"><i class="fas fa-sign-in-alt"></i> Đăng nhập khách hàng</h3>
+                <h3 class="mb-0"><i class="fas fa-sign-in-alt"></i> Customer Log in</h3>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('auth.login') }}">
@@ -15,7 +15,7 @@
 
                     <div class="mb-3">
                         {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control", placeholder="Nhập tên đăng nhập của bạn") }}
+                        {{ form.username(class="form-control", placeholder="Enter your username") }}
                         {% if form.username.errors %}
                             <div class="text-danger small mt-1">
                                 {% for error in form.username.errors %}
@@ -27,7 +27,7 @@
 
                     <div class="mb-3">
                         {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control", placeholder="Nhập mật khẩu của bạn") }}
+                        {{ form.password(class="form-control", placeholder="Enter your password") }}
                         {% if form.password.errors %}
                             <div class="text-danger small mt-1">
                                 {% for error in form.password.errors %}
@@ -45,7 +45,7 @@
                     {{ form.submit(class="btn btn-primary w-100 py-2") }}
                 </form>
                 <hr>
-                <p class="text-center">Chưa có tài khoản? <a href="{{ url_for('auth.register') }}">Đăng ký ngay!</a></p>
+                <p class="text-center">Don't have an account? <a href="{{ url_for('auth.register') }}">Register now!</a></p>
             </div>
         </div>
     </div>

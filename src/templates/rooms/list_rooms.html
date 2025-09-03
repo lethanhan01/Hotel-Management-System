@@ -1,23 +1,23 @@
 {% extends 'base.html' %}
 
-{% block title %}Danh sách Phòng{% endblock %}
+{% block title %}Room List{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-10">
-        <h2 class="mb-4 text-center">Danh sách Phòng Trống</h2>
+    <h2 class="mb-4 text-center">Available Rooms</h2>
 
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-info text-white">
-                <h4 class="mb-0"><i class="fas fa-search"></i> Tìm kiếm và Lọc Phòng</h4>
+                <h4 class="mb-0"><i class="fas fa-search"></i> Search & Filter Rooms</h4>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('main.list_rooms') }}">
                     {{ form.csrf_token }}
                     <div class="row g-3">
                         <div class="col-md-6">
-                            {{ form.check_in_date.label(class="form-label") }}
-                            {{ form.check_in_date(class="form-control", type="date", min=current_date_str) }}
+                            <label for="check_in_date" class="form-label">Check-in date</label>
+                            {{ form.check_in_date(class="form-control", id="check_in_date", type="date", min=current_date_str) }}
                             {% if form.check_in_date.errors %}
                                 <div class="text-danger small mt-1">
                                     {% for error in form.check_in_date.errors %}
@@ -27,8 +27,8 @@
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            {{ form.check_out_date.label(class="form-label") }}
-                            {{ form.check_out_date(class="form-control", type="date", min=current_date_str) }}
+                            <label for="check_out_date" class="form-label">Check-out date</label>
+                            {{ form.check_out_date(class="form-control", id="check_out_date", type="date", min=current_date_str) }}
                             {% if form.check_out_date.errors %}
                                 <div class="text-danger small mt-1">
                                     {% for error in form.check_out_date.errors %}
@@ -38,8 +38,8 @@
                             {% endif %}
                         </div>
                         <div class="col-md-4">
-                            {{ form.room_type.label(class="form-label") }}
-                            {{ form.room_type(class="form-select") }}
+                            <label for="room_type" class="form-label">Room type</label>
+                            {{ form.room_type(class="form-select", id="room_type") }}
                             {% if form.room_type.errors %}
                                 <div class="text-danger small mt-1">
                                     {% for error in form.room_type.errors %}
@@ -49,8 +49,8 @@
                             {% endif %}
                         </div>
                         <div class="col-md-4">
-                            {{ form.min_price.label(class="form-label") }}
-                            {{ form.min_price(class="form-control", type="number", step="1000", placeholder="VD: 500000") }}
+                            <label for="min_price" class="form-label">Min price</label>
+                            {{ form.min_price(class="form-control", id="min_price", type="number", step="1000", placeholder="e.g. 500000") }}
                             {% if form.min_price.errors %}
                                 <div class="text-danger small mt-1">
                                     {% for error in form.min_price.errors %}
@@ -60,8 +60,8 @@
                             {% endif %}
                         </div>
                         <div class="col-md-4">
-                            {{ form.max_price.label(class="form-label") }}
-                            {{ form.max_price(class="form-control", type="number", step="1000", placeholder="VD: 2000000") }}
+                            <label for="max_price" class="form-label">Max price</label>
+                            {{ form.max_price(class="form-control", id="max_price", type="number", step="1000", placeholder="e.g. 2000000") }}
                             {% if form.max_price.errors %}
                                 <div class="text-danger small mt-1">
                                     {% for error in form.max_price.errors %}
@@ -71,8 +71,8 @@
                             {% endif %}
                         </div>
                         <div class="col-md-4">
-                            {{ form.min_capacity.label(class="form-label") }}
-                            {{ form.min_capacity(class="form-control", type="number", min="1", placeholder="VD: 2") }}
+                            <label for="min_capacity" class="form-label">Min capacity</label>
+                            {{ form.min_capacity(class="form-control", id="min_capacity", type="number", min="1", placeholder="e.g. 2") }}
                             {% if form.min_capacity.errors %}
                                 <div class="text-danger small mt-1">
                                     {% for error in form.min_capacity.errors %}
@@ -82,8 +82,8 @@
                             {% endif %}
                         </div>
                         <div class="col-md-4">
-                            {{ form.room_number.label(class="form-label") }}
-                            {{ form.room_number(class="form-control", type="number", min="1", placeholder="VD: 101") }}
+                            <label for="room_number" class="form-label">Room number</label>
+                            {{ form.room_number(class="form-control", id="room_number", type="number", min="1", placeholder="e.g. 101") }}
                             {% if form.room_number.errors %}
                                 <div class="text-danger small mt-1">
                                     {% for error in form.room_number.errors %}
@@ -93,7 +93,7 @@
                             {% endif %}
                         </div>
                         <div class="col-12 text-end">
-                            {{ form.submit(class="btn btn-primary") }}
+                            <button type="submit" class="btn btn-primary">Search</button>
                         </div>
                     </div>
                 </form>
@@ -110,7 +110,7 @@
                            2) Otherwise, try a room-type specific JPG: images/<room_type_slug>.jpg
                            3) Final fallback: one of the SVG illustrations (varied by room_id)
                         #}
-                        {% set alt_text = (room.room_type ~ ' - Phòng ' ~ room.room_number) %}
+                        {% set alt_text = (room.room_type ~ ' - Room ' ~ room.room_number) %}
                         {% if room.image_filename %}
                             <img loading="lazy" src="{{ url_for('static', filename='images/' ~ room.image_filename) }}" class="card-img-top room-img" data-fallback="{{ url_for('static', filename='images/room_default.svg') }}" alt="{{ alt_text }}">
                         {% else %}
@@ -132,34 +132,34 @@
                             {% endif %}
                         {% endif %}
                         <div class="card-body">
-                            <h5 class="card-title">{{ room.room_type }} - Phòng số {{ room.room_number }}</h5>
-                            <p class="card-text">{{ room.description or 'Chưa có mô tả.' }}</p>
+                            <h5 class="card-title">{{ room.room_type }} - Room {{ room.room_number }}</h5>
+                            <p class="card-text">{{ room.description or 'No description yet.' }}</p>
                             <ul class="list-group list-group-flush mb-3">
-                                <li class="list-group-item"><strong>Giá:</strong> {{ "{:,.0f}".format(room.price_per_night) }} VNĐ / đêm</li>
-                                <li class="list-group-item"><strong>Sức chứa:</strong> {{ room.capacity }} người</li>
-                                <li class="list-group-item"><strong>Trạng thái:</strong>
+                                <li class="list-group-item"><strong>Price:</strong> {{ "{:,.0f}".format(room.price_per_night) }} VND / night</li>
+                                    <li class="list-group-item"><strong>Capacity:</strong> {{ room.capacity }} guests</li>
+                                <li class="list-group-item"><strong>Status:</strong>
                                     {% if room.status == 0 %}
-                                        <span class="badge bg-success">Trống</span>
+                                        <span class="badge bg-success">Available</span>
                                     {% elif room.status == 1 %}
-                                        <span class="badge bg-warning text-dark">Đã đặt</span>
+                                        <span class="badge bg-warning text-dark">Booked</span>
                                     {% elif room.status == 2 %}
-                                        <span class="badge bg-primary">Đang bảo trì</span>
+                                        <span class="badge bg-primary">Under Maintenance</span>
                                     {% endif %}
                                 </li>
                             </ul>
-                            {# Bắt đầu thay đổi ở đây #}
+                            {# Start of interactive button area #}
                             {% if room.status == 0 %}
                                 {% if current_user.is_authenticated %}
-                                    <a href="{{ url_for('main.book_room', room_id=room.room_id) }}" class="btn btn-success btn-sm"><i class="fas fa-calendar-alt"></i> Đặt phòng này</a>
+                                    <a href="{{ url_for('main.book_room', room_id=room.room_id) }}" class="btn btn-success btn-sm"><i class="fas fa-calendar-alt"></i> Book this room</a>
                                 {% else %}
                                     <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#loginPromptModal">
-                                        <i class="fas fa-calendar-alt"></i> Đặt phòng này
+                                        <i class="fas fa-calendar-alt"></i> Book this room
                                     </button>
                                 {% endif %}
-                            {% else %}
-                                <button class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i> Không khả dụng</button>
+                                {% else %}
+                                <button class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i> Not available</button>
                             {% endif %}
-                            {# Kết thúc thay đổi ở đây #}
+                            {# End of interactive button area #}
                         </div>
                     </div>
                 </div>
@@ -167,27 +167,27 @@
             </div>
         {% else %}
             <div class="alert alert-info text-center" role="alert">
-                Không tìm thấy phòng nào phù hợp với yêu cầu của bạn.
+                No rooms matched your search criteria.
             </div>
         {% endif %}
     </div>
 </div>
 
-{# Thêm Modal Prompt Đăng nhập ở cuối file list_rooms.html, trước block scripts #}
+{# Login prompt modal (appears when user not authenticated) #}
 <div class="modal fade" id="loginPromptModal" tabindex="-1" aria-labelledby="loginPromptModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="loginPromptModalLabel">Yêu cầu Đăng nhập</h5>
+                <h5 class="modal-title" id="loginPromptModalLabel">Login Required</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Bạn cần đăng nhập để đặt phòng. Vui lòng đăng nhập hoặc đăng ký tài khoản.
+                You must be logged in to book a room. Please log in or register an account.
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Đăng nhập</a>
-                <a href="{{ url_for('auth.register') }}" class="btn btn-info">Đăng ký</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log in</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-info">Register</a>
             </div>
         </div>
     </div>

@@ -1,26 +1,47 @@
 {% extends 'base.html' %}
 
-{% block title %}Đặt phòng {{ room.room_number }}{% endblock %}
+{% block title %}Book Room {{ room.room_number }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card shadow-sm">
+                {% set alt_text = (room.room_type ~ ' - Phòng ' ~ room.room_number) %}
+                {# Full-width image above header #}
+                {% if room.image_filename %}
+                    <img src="{{ url_for('static', filename='images/' ~ room.image_filename) }}" alt="{{ alt_text }}" class="card-img-top img-fluid" style="width:100%; height:300px; object-fit:cover;" />
+                {% else %}
+                    {% set t = (room.room_type or '') | lower %}
+                    {% if 'deluxe' in t %}
+                        <img src="{{ url_for('static', filename='images/Deluxe.jpg') }}" alt="{{ alt_text }}" class="card-img-top img-fluid" style="width:100%; height:300px; object-fit:cover;" />
+                    {% elif 'suite' in t %}
+                        <img src="{{ url_for('static', filename='images/Suite.jpg') }}" alt="{{ alt_text }}" class="card-img-top img-fluid" style="width:100%; height:300px; object-fit:cover;" />
+                    {% elif 'single' in t %}
+                        <img src="{{ url_for('static', filename='images/Single.jpg') }}" alt="{{ alt_text }}" class="card-img-top img-fluid" style="width:100%; height:300px; object-fit:cover;" />
+                    {% elif 'double' in t %}
+                        <img src="{{ url_for('static', filename='images/Double.jpg') }}" alt="{{ alt_text }}" class="card-img-top img-fluid" style="width:100%; height:300px; object-fit:cover;" />
+                    {% elif 'standard' in t %}
+                        <img src="{{ url_for('static', filename='images/Standard.jpg') }}" alt="{{ alt_text }}" class="card-img-top img-fluid" style="width:100%; height:300px; object-fit:cover;" />
+                    {% else %}
+                        {% set type_slug = room.room_type | default('room') | replace(' ', '_') %}
+                        <img src="{{ url_for('static', filename='images/' ~ type_slug ~ '.jpg') }}" alt="{{ alt_text }}" class="card-img-top img-fluid" style="width:100%; height:300px; object-fit:cover;" />
+                    {% endif %}
+                {% endif %}
             <div class="card-header bg-success text-white">
-                <h3 class="mb-0"><i class="fas fa-calendar-check"></i> Đặt phòng số: {{ room.room_number }} ({{ room.room_type }})</h3>
+                <h3 class="mb-0"><i class="fas fa-calendar-check"></i> Booking: Room {{ room.room_number }} ({{ room.room_type }})</h3>
             </div>
             <div class="card-body">
-                <h5 class="card-title">Chi tiết phòng:</h5>
+                <h5 class="card-title">Room details:</h5>
                 <ul class="list-group list-group-flush mb-3">
-                    <li class="list-group-item"><strong>Sức chứa:</strong> {{ room.capacity }} người</li>
-                    <li class="list-group-item"><strong>Giá mỗi đêm:</strong> {{ "{:,.0f}".format(room.price_per_night) }} VNĐ</li>
-                    <li class="list-group-item"><strong>Mô tả view:</strong> {{ room.view_description or 'Chưa có' }}</li>
-                    <li class="list-group-item"><strong>Tiện nghi:</strong> {{ room.amenities or 'Chưa có' }}</li>
+                    <li class="list-group-item"><strong>Capacity:</strong> {{ room.capacity }} guests</li>
+                    <li class="list-group-item"><strong>Price per night:</strong> {{ "{:,.0f}".format(room.price_per_night) }} VND</li>
+                    <li class="list-group-item"><strong>View description:</strong> {{ room.view_description or 'Not available' }}</li>
+                    <li class="list-group-item"><strong>Amenities:</strong> {{ room.amenities or 'Not available' }}</li>
                 </ul>
 
                 <hr>
 
-                <h5 class="card-title">Thông tin đặt phòng:</h5>
+                <h5 class="card-title">Booking information:</h5>
                 <form method="POST" action="{{ url_for('main.book_room', room_id=room.room_id) }}">
                     {{ form.csrf_token }}
 
@@ -48,7 +69,7 @@
                     </div>
                     <div class="mb-3">
                         {{ form.special_requests.label(class="form-label") }}
-                        {{ form.special_requests(class="form-control", rows="3", placeholder="VD: Gối thêm, khăn tắm thêm,...") }}
+                        {{ form.special_requests(class="form-control", rows="3", placeholder="E.g.: extra pillow, extra towels, ...") }}
                         {% if form.special_requests.errors %}
                             <div class="text-danger small mt-1">
                                 {% for error in form.special_requests.errors %}
@@ -70,7 +91,7 @@
                     </div>
                     <div class="mb-3">
                         {{ form.promotion_code.label(class="form-label") }}
-                        {{ form.promotion_code(class="form-control", placeholder="Nếu có") }}
+                        {{ form.promotion_code(class="form-control", placeholder="If available") }}
                         {% if form.promotion_code.errors %}
                             <div class="text-danger small mt-1">
                                 {% for error in form.promotion_code.errors %}
@@ -84,7 +105,7 @@
                 </form>
 
                 <hr>
-                <a href="{{ url_for('main.list_rooms') }}" class="btn btn-secondary mt-3"><i class="fas fa-arrow-left"></i> Quay lại danh sách phòng</a>
+                <a href="{{ url_for('main.list_rooms') }}" class="btn btn-secondary mt-3"><i class="fas fa-arrow-left"></i> Back to room list</a>
             </div>
         </div>
     </div>

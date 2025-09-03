@@ -15,11 +15,11 @@ def login():
     if form.validate_on_submit():
         user = Customer.query.filter_by(username=form.username.data).first()
         if user is None or user.password != form.password.data:
-            flash('Tên đăng nhập hoặc mật khẩu không hợp lệ.', 'danger')
+            flash('Invalid username or password.', 'danger')
             return redirect(url_for('auth.login'))
 
         login_user(user, remember=form.remember_me.data)
-        flash('Đăng nhập thành công!', 'success')
+        flash('Logged in successfully!', 'success')
 
         next_page = request.args.get('next')
         return redirect(next_page or url_for('main.index'))
@@ -30,7 +30,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash('Bạn đã đăng xuất.', 'info')
+    flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
@@ -41,12 +41,12 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         if form.password.data != form.confirm_password.data:
-            flash('Mật khẩu xác nhận không khớp.', 'danger')
+            flash('Password confirmation does not match.', 'danger')
             return render_template('auth/register.html', form=form)
 
         existing_user = Customer.query.filter_by(username=form.username.data).first()
         if existing_user:
-            flash('Tên đăng nhập đã tồn tại.', 'danger')
+            flash('Username already exists.', 'danger')
             return render_template('auth/register.html', form=form)
 
         new_customer = Customer(
@@ -57,7 +57,7 @@ def register():
         db.session.add(new_customer)
         db.session.commit()
 
-        flash('Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.', 'success')
+        flash('Registration successful! You can log in now.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html', form=form)

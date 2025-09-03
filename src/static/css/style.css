@@ -1,0 +1,39 @@
+/* Minimal site styles to ensure consistent background and avoid stray gray blocks */
+html, body {
+  height: 100%;
+  background-color: #fff; /* ensure white page background */
+}
+
+.container {
+  max-width: 1300px;
+}
+
+.footer {
+  background-color: #f8f9fa; /* light footer to match Bootstrap */
+}
+
+/* Make footer fixed to viewport bottom */
+.site-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1030; /* above normal content but below modal/backdrops */
+}
+
+/* Ensure page content doesn't get hidden under fixed footer: add bottom padding roughly equal to footer height */
+body {
+  padding-bottom: 72px; /* adjust if your footer gets taller */
+}
+
+/* Ensure jumbotron-like hero has no unexpected overflow */
+.jumbotron img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Utility to hide any stray fixed elements accidentally left in templates */
+.fixed-stray {
+  display: none !important;
+}

@@ -38,18 +38,18 @@ def profile():
 
             if form.current_password.data and form.new_password.data:
                 if current_user.password != form.current_password.data:
-                    flash('Mật khẩu hiện tại không đúng.', 'danger')
+                    flash('Current password is incorrect.', 'danger')
                     return render_template('profile.html', form=form)
                 
                 current_user.password = form.new_password.data 
-                flash('Mật khẩu của bạn đã được thay đổi thành công.', 'success')
+                flash('Your password has been changed successfully.', 'success')
 
             db.session.commit()
-            flash('Thông tin hồ sơ đã được cập nhật thành công.', 'success')
+            flash('Profile information updated successfully.', 'success')
             return redirect(url_for('main.profile'))
         except Exception as e:
             db.session.rollback()
-            flash(f'Đã xảy ra lỗi khi cập nhật hồ sơ: {e}', 'danger')
+            flash(f'An error occurred while updating profile: {e}', 'danger')
             print(f"Error updating profile: {e}")
     elif request.method == 'GET':
         form.full_name.data = current_user.full_name
@@ -116,10 +116,10 @@ def list_rooms():
             rooms = rooms_list
             
             if not rooms:
-                flash('Không tìm thấy phòng phù hợp với tiêu chí tìm kiếm của bạn.', 'info')
+                flash('No rooms matched your search criteria.', 'info')
 
         except Exception as e:
-            flash(f'Đã xảy ra lỗi khi tìm kiếm phòng: {e}', 'danger')
+            flash(f'An error occurred while searching for rooms: {e}', 'danger')
             print(f"Error calling get_available_rooms: {e}")
             rooms = []
     else:
@@ -168,7 +168,7 @@ def list_rooms():
             rooms = rooms_list_default
 
         except Exception as e:
-            flash(f'Lỗi khi tải danh sách phòng ban đầu: {e}', 'danger')
+            flash(f'Error loading initial rooms: {e}', 'danger')
             print(f"Error loading initial rooms: {e}")
             rooms = []
 
@@ -179,7 +179,7 @@ def list_rooms():
 @login_required
 def book_room(room_id):
     if current_user.account_status == 0: 
-        flash('Tài khoản của bạn hiện đang bị vô hiệu hóa hoặc không hoạt động. Vui lòng liên hệ quản trị viên để biết thêm chi tiết.', 'danger')
+        flash('Your account is currently disabled or inactive. Please contact the administrator for details.', 'danger')
         return redirect(url_for('main.list_rooms'))
     
     room = Room.query.get_or_404(room_id)
@@ -187,12 +187,12 @@ def book_room(room_id):
 
     if form.validate_on_submit():
         if form.check_out_date.data <= form.check_in_date.data:
-            flash('Ngày trả phòng phải sau ngày nhận phòng.', 'danger')
+            flash('Check-out date must be after check-in date.', 'danger')
             return render_template('rooms/book_room.html', room=room, form=form) 
 
         # Kiểm tra ngày check-in không được trong quá khứ
         if form.check_in_date.data < date.today():
-            flash('Ngày nhận phòng không thể là ngày trong quá khứ.', 'danger')
+            flash('Check-in date cannot be in the past.', 'danger')
             return render_template('rooms/book_room.html', room=room, form=form) 
 
         try:
@@ -226,16 +226,16 @@ def book_room(room_id):
 
             if result and result.booking_id: 
                 db.session.commit() 
-                flash(f'Yêu cầu đặt phòng của bạn đã được gửi thành công! (Mã booking: {result.booking_id}, Hóa đơn: {result.invoice_id}, Tổng tiền: {result.final_amount}).', 'success')
+                flash(f'Your booking request was submitted successfully! (Booking ID: {result.booking_id}, Invoice: {result.invoice_id}, Total: {result.final_amount}).', 'success')
                 return redirect(url_for('main.booking_details', booking_id=result.booking_id))
             else:
                 db.session.rollback() 
-                flash(f'Lỗi đặt phòng: {result.message if result and result.message else "Không rõ lỗi từ hệ thống. Vui lòng thử lại."}', 'danger')
+                flash(f'Booking error: {result.message if result and result.message else "Unknown error from system. Please try again."}', 'danger')
                 return render_template('rooms/book_room.html', room=room, form=form) # Sửa đường dẫn template
 
         except Exception as e:
             db.session.rollback() 
-            flash(f'Đã xảy ra lỗi hệ thống khi đặt phòng: {e}', 'danger')
+            flash(f'A system error occurred while creating the booking: {e}', 'danger')
             print(f"Error calling create_booking_with_invoice_fixed: {e}")
             return render_template('rooms/book_room.html', room=room, form=form) 
     
@@ -244,7 +244,7 @@ def book_room(room_id):
             form.check_in_date.data = date.fromisoformat(request.args.get('check_in_date'))
             form.check_out_date.data = date.fromisoformat(request.args.get('check_out_date'))
         except ValueError:
-            flash('Định dạng ngày không hợp lệ trong URL.', 'warning')
+            flash('Invalid date format in the URL.', 'warning')
 
     return render_template('rooms/book_room.html', room=room, form=form)
 
@@ -261,7 +261,7 @@ def booking_details(booking_id):
     booking = Booking.query.get_or_404(booking_id)
 
     if booking.customer_id != current_user.customer_id:
-        flash('Bạn không có quyền truy cập đặt phòng này.', 'danger')
+        flash('You do not have permission to access this booking.', 'danger')
         return redirect(url_for('main.my_bookings'))
 
     # Khởi tạo các form
@@ -271,7 +271,7 @@ def booking_details(booking_id):
     if request.method == 'POST':
         if add_service_form.submit_service.data and add_service_form.validate_on_submit():
             if booking.status != 1: 
-                flash('Không thể thêm dịch vụ cho đặt phòng này do trạng thái hiện tại không hợp lệ (chỉ được thêm khi "Đã Xác nhận").', 'danger')
+                flash('Cannot add services to this booking due to its current status (only allowed when "Confirmed").', 'danger')
                 return redirect(url_for('main.booking_details', booking_id=booking_id))
 
             p_service_name = add_service_form.service_name.data
@@ -302,19 +302,19 @@ def booking_details(booking_id):
 
                 if result and result.service_id:
                     db.session.commit() 
-                    flash(f'Dịch vụ "{p_service_name}" đã được thêm thành công! Hóa đơn cập nhật: {result.updated_final_amount:,.0f} VNĐ. {result.message}', 'success')
+                    flash(f'Service "{p_service_name}" was added successfully! Invoice updated: {result.updated_final_amount:,.0f} VND. {result.message}', 'success')
                     return redirect(url_for('main.booking_details', booking_id=booking.booking_id))
                 else:
                     db.session.rollback() 
-                    flash(f'Lỗi thêm dịch vụ: {result.message if result and result.message else "Không rõ lỗi từ hệ thống."}', 'danger')
+                    flash(f'Error adding service: {result.message if result and result.message else "Unknown error from system."}', 'danger')
             except Exception as e:
                 db.session.rollback()
-                flash(f'Đã xảy ra lỗi hệ thống khi thêm dịch vụ: {e}', 'danger')
+                flash(f'A system error occurred while adding the service: {e}', 'danger')
                 print(f"Error calling add_service_to_booking: {e}")
 
         elif cancel_form.submit_cancel.data and cancel_form.validate_on_submit():
             if booking.status != 1: 
-                flash('Không thể hủy đặt phòng này do trạng thái hiện tại không hợp lệ (chỉ được hủy khi "Đã Xác nhận").', 'danger')
+                flash('Cannot cancel this booking due to its current status (only allowed when "Confirmed").', 'danger')
                 return redirect(url_for('main.booking_details', booking_id=booking_id))
 
             p_cancellation_reason = cancel_form.cancellation_reason.data
@@ -339,14 +339,14 @@ def booking_details(booking_id):
 
                 if result and result.booking_id:
                     db.session.commit() # Commit transaction
-                    flash(f'Đã hủy đặt phòng {result.booking_id} thành công! {result.message}', 'success')
+                    flash(f'Booking {result.booking_id} was cancelled successfully! {result.message}', 'success')
                     return redirect(url_for('main.my_bookings')) 
                 else:
                     db.session.rollback() 
-                    flash(f'Lỗi hủy phòng: {result.message if result and result.message else "Không rõ lỗi từ hệ thống."}', 'danger')
+                    flash(f'Cancellation error: {result.message if result and result.message else "Unknown error from system."}', 'danger')
             except Exception as e:
                 db.session.rollback()
-                flash(f'Đã xảy ra lỗi hệ thống khi hủy phòng: {e}', 'danger')
+                flash(f'A system error occurred while cancelling the booking: {e}', 'danger')
                 print(f"Error calling cancel_booking_by_customer: {e}")
     try:
         sql_query_details = f"SELECT * FROM get_booking_details(:booking_id);"
@@ -359,7 +359,7 @@ def booking_details(booking_id):
         print(f"Raw booking_details_result: {booking_details_result}") # DEBUG
 
         if booking_details_result is None:
-            flash('Không tìm thấy chi tiết đặt phòng hoặc hóa đơn liên quan.', 'warning')
+            flash('No booking details or related invoice found.', 'warning')
             booking_details_dict = None
         else:
             # Chuyển RowProxy object thành dict để dễ dàng truy cập trong template
@@ -389,7 +389,7 @@ def booking_details(booking_id):
         print(f"Services for booking_id {booking.booking_id}: {services}") # DEBUG
 
     except Exception as e:
-        flash(f'Lỗi khi tải chi tiết đặt phòng: {e}', 'danger')
+        flash(f'Error loading booking details: {e}', 'danger')
         print(f"Error fetching booking details or services: {e}")
         booking_details_dict = None
         services = [] 
