@@ -3,8 +3,8 @@ from flask_login import LoginManager
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-login_manager.login_view = 'auth.login' # Đây là điểm đến khi @login_required phát hiện chưa đăng nhập
-login_manager.login_message = "Vui lòng đăng nhập để truy cập trang này."
+login_manager.login_view = 'auth.login' # This is the destination when @login_required finds the user not logged in
+login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "warning"
 
 

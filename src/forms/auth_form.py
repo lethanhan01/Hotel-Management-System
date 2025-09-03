@@ -3,14 +3,14 @@ from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Length
 
 class LoginForm(FlaskForm): 
-    username = StringField('Tên đăng nhập', validators=[DataRequired(), Length(min=4, max=100)])
-    password = PasswordField('Mật khẩu', validators=[DataRequired()])
-    remember_me = BooleanField('Nhớ đăng nhập')
-    submit = SubmitField('Đăng nhập')
+    username = StringField('Username', validators=[DataRequired(), Length(min=4, max=100)])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember_me = BooleanField('Remember me')
+    submit = SubmitField('Log in')
 
 class RegisterForm(FlaskForm): 
-    username = StringField('Tên đăng nhập', validators=[DataRequired(), Length(min=4, max=100)])
+    username = StringField('Username', validators=[DataRequired(), Length(min=4, max=100)])
     email = StringField('Email', validators=[DataRequired()])
-    password = PasswordField('Mật khẩu', validators=[DataRequired(), Length(min=6)])
-    confirm_password = PasswordField('Xác nhận mật khẩu', validators=[DataRequired()])
-    submit = SubmitField('Đăng ký')
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Confirm password', validators=[DataRequired()])
+    submit = SubmitField('Register')

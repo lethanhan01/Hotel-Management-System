@@ -23,13 +23,13 @@
                             <li class="list-group-item"><strong>Room price / night:</strong> {{ "{:,.0f}".format(booking_details.room_price) }} VND</li>
                             <li class="list-group-item"><strong>Promotion code:</strong> {{ booking_details.promotion_name or 'Not applied' }}</li>
                             <li class="list-group-item"><strong>Special requests:</strong> {{ booking.special_requests or 'None' }}</li>
-                            <li class="list-group-item"><strong>Trạng thái Booking:</strong>
-                                {% if booking.status == 0 %} <span class="badge bg-warning text-dark">Đã Hủy</span>
-                                {% elif booking.status == 1 %} <span class="badge bg-success">Đã Xác nhận</span>
-                                {% elif booking.status == 2 %} <span class="badge bg-primary">Đã Check-in</span>
-                                {% elif booking.status == 3 %} <span class="badge bg-info text-dark">Đã Check-out</span>
-                                {% elif booking.status == 4 %} <span class="badge bg-danger">Chờ duyệt</span>
-                                {% else %} <span class="badge bg-secondary">Không rõ</span>
+                            <li class="list-group-item"><strong>Booking status:</strong>
+                                {% if booking.status == 0 %} <span class="badge bg-warning text-dark">Cancelled</span>
+                                {% elif booking.status == 1 %} <span class="badge bg-success">Confirmed</span>
+                                {% elif booking.status == 2 %} <span class="badge bg-primary">Checked-in</span>
+                                {% elif booking.status == 3 %} <span class="badge bg-info text-dark">Checked-out</span>
+                                {% elif booking.status == 4 %} <span class="badge bg-danger">Pending approval</span>
+                                {% else %} <span class="badge bg-secondary">Unknown</span>
                                 {% endif %}
                             </li>
                         </ul>
@@ -59,10 +59,10 @@
                 {% if services %}
                 <ul class="list-group mb-3">
                     {% for service in services %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>{{ service.service_name }}</strong> ({{ service.service_type }})
-                            <br><small>{{ service.description or 'Không có mô tả' }}</small>
+                <br><small>{{ service.description or 'No description' }}</small>
                         </div>
                         <span class="badge bg-info text-dark">{{ "{:,.0f}".format(service.price) }} VNĐ</span>
                     </li>
@@ -74,7 +74,7 @@
 
                 <hr>
 
-                {% if booking.status == 1 %} {# Chỉ cho phép thêm dịch vụ và hủy nếu booking đang "Đã xác nhận" (status = 1) #}
+                {% if booking.status == 1 %} {# Only allow adding services and cancellation when booking is "Confirmed" (status = 1) #}
                 <h5 class="mb-3">Add new service</h5>
                 <form method="POST" action="{{ url_for('main.booking_details', booking_id=booking.booking_id) }}">
                     {{ add_service_form.csrf_token }}
@@ -163,7 +163,7 @@
                 {% endif %}
 
                 <hr>
-                <a href="{{ url_for('main.my_bookings') }}" class="btn btn-secondary mt-3"><i class="fas fa-arrow-left"></i> Quay lại danh sách đặt phòng</a>
+                <a href="{{ url_for('main.my_bookings') }}" class="btn btn-secondary mt-3"><i class="fas fa-arrow-left"></i> Back to bookings</a>
             </div>
         </div>
     </div>
