@@ -11,14 +11,16 @@
     <p>You are logged in as: <strong>{{ current_user.username }}</strong>.</p>
     <p>Explore the hotel management features available to you.</p>
         <p class="lead">
-            <a class="btn btn-primary btn-lg me-2" href="{{ url_for('main.profile') }}" role="button"><i class="fas fa-id-card"></i> View your profile</a>
+            <a class="btn btn-primary btn-lg me-2" href="{{ url_for('main.list_rooms') }}" role="button"><i class="fas fa-door-open"></i> Start Booking</a>
+            <a class="btn btn-success btn-lg me-2" href="{{ url_for('main.profile') }}" role="button"><i class="fas fa-id-card"></i> View your profile</a>
             <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.logout') }}" role="button"><i class="fas fa-sign-out-alt"></i> Log out</a>
         </p>
     {% else %}
     <p>Please log in or register to continue.</p>
         <p class="lead">
-            <a class="btn btn-primary btn-lg me-2" href="{{ url_for('auth.login') }}" role="button"><i class="fas fa-sign-in-alt"></i> Log in</a>
-            <a class="btn btn-success btn-lg" href="{{ url_for('auth.register') }}" role="button"><i class="fas fa-user-plus"></i> Register</a>
+            <a class="btn btn-primary btn-lg me-2" href="{{ url_for('main.list_rooms') }}" role="button"><i class="fas fa-door-open"></i> Start Booking</a>
+                <a class="btn btn-success btn-lg me-2" href="{{ url_for('auth.login') }}" role="button"><i class="fas fa-sign-in-alt"></i> Log in</a>
+            <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.register') }}" role="button"><i class="fas fa-user-plus"></i> Register</a>
         </p>
     {% endif %}
 </div>
