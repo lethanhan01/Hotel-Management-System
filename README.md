@@ -16,7 +16,7 @@ The project aims to address the complex operational demands of a modern hotel, w
 The system is built on **PostgreSQL** and leverages advanced database principles to ensure data consistency, integrity, and high-performance querying.
 
 ## Demo Project
-[![Xem video demo](https://img.youtube.com/vi/pR_fqhpFZJM/hqdefault.jpg)](https://www.youtube.com/watch?v=zvn04xnZ2s4)
+[![Xem demo trên YouTube](https://img.youtube.com/vi/zvn04xnZ2s4/maxresdefault.jpg)](https://www.youtube.com/watch?v=zvn04xnZ2s4 "Bấm để xem trên YouTube")
 
 ## Key Features
 
