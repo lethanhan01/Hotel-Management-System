@@ -1,16 +1,41 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, abort
 from flask_login import login_required, current_user
 from forms.profile_form import ProfileEditForm
 from models.room import Room
 from models.booking import Booking 
 from models.service import Service 
-from extensions import db
+from models.invoice import Invoice
+from extensions import supabase
 from forms.booking_form import BookingForm, AddServiceForm, CancelBookingForm
 from forms.room_form import RoomSearchForm 
 from datetime import date
 from decimal import Decimal
 
 main_bp = Blueprint('main', __name__)
+
+def _parse_date(value):
+    if isinstance(value, date) or value is None:
+        return value
+    try:
+        return date.fromisoformat(value)
+    except Exception:
+        return value
+
+def _raise_on_error(response):
+    error = getattr(response, 'error', None)
+    if error:
+        message = getattr(error, 'message', None) or str(error)
+        raise Exception(message)
+
+def _to_iso(value):
+    if isinstance(value, date):
+        return value.isoformat()
+    return value
+
+def _to_json_value(value):
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
 
 @main_bp.route('/')
 @main_bp.route('/home')
@@ -24,31 +49,42 @@ def profile():
 
     if form.validate_on_submit():
         try:
+            update_data = {}
+
             if form.full_name.data: 
-                current_user.full_name = form.full_name.data
+                update_data['full_name'] = form.full_name.data
             
             if form.identification_number.data: 
-                current_user.identification_number = form.identification_number.data
+                update_data['identification_number'] = form.identification_number.data
             
             if form.phone_number.data: 
-                current_user.phone_number = form.phone_number.data
+                update_data['phone_number'] = form.phone_number.data
             
             if form.email.data: 
-                current_user.email = form.email.data
+                update_data['email'] = form.email.data
 
             if form.current_password.data and form.new_password.data:
                 if current_user.password != form.current_password.data:
                     flash('Current password is incorrect.', 'danger')
                     return render_template('profile.html', form=form)
                 
-                current_user.password = form.new_password.data 
+                update_data['password'] = form.new_password.data
                 flash('Your password has been changed successfully.', 'success')
 
-            db.session.commit()
+            if update_data:
+                response = supabase.table('customer') \
+                    .update(update_data) \
+                    .eq('customer_id', current_user.customer_id) \
+                    .execute()
+
+                _raise_on_error(response)
+
+                for key, value in update_data.items():
+                    setattr(current_user, key, value)
+
             flash('Profile information updated successfully.', 'success')
             return redirect(url_for('main.profile'))
         except Exception as e:
-            db.session.rollback()
             flash(f'An error occurred while updating profile: {e}', 'danger')
             print(f"Error updating profile: {e}")
     elif request.method == 'GET':
@@ -76,43 +112,34 @@ def list_rooms():
         room_number = form.room_number.data # LẤY GIÁ TRỊ TỪ FORM
 
         try:
-            sql_query = f"""
-                SELECT room_id, room_number, room_type, price_per_night, capacity, status, description
-                FROM get_available_rooms(
-                    :check_in_date,
-                    :check_out_date,
-                    :room_type,
-                    :min_price,
-                    :max_price,
-                    :min_capacity,
-                    :room_number -- TRUYỀN THAM SỐ MỚI
-                );
-            """
-            result = db.session.execute(
-                db.text(sql_query),
+            response = supabase.rpc(
+                'get_available_rooms',
                 {
-                    'check_in_date': check_in_date,
-                    'check_out_date': check_out_date,
-                    'room_type': room_type,
-                    'min_price': min_price,
-                    'max_price': max_price,
-                    'min_capacity': min_capacity,
-                    'room_number': room_number # GÁN GIÁ TRỊ VÀO PARAMETERS
+                    'p_check_in_date': _to_iso(check_in_date),
+                    'p_check_out_date': _to_iso(check_out_date),
+                    'p_room_type': room_type,
+                    'p_min_price': _to_json_value(min_price),
+                    'p_max_price': _to_json_value(max_price),
+                    'p_min_capacity': min_capacity,
+                    'p_room_number': room_number
                 }
-            ).fetchall()
+            ).execute()
+
+            _raise_on_error(response)
 
             rooms_list = []
-            for r in result:
-                temp_room = Room(
-                    room_id=r.room_id,
-                    room_number=r.room_number,
-                    room_type=r.room_type,
-                    price_per_night=r.price_per_night,
-                    capacity=r.capacity,
-                    status=r.status
-                )
-                temp_room.view_description = r.description
-                rooms_list.append(temp_room)
+            for r in response.data or []:
+                temp_room = Room.from_dict({
+                    'room_id': r.get('room_id'),
+                    'room_number': r.get('room_number'),
+                    'room_type': r.get('room_type'),
+                    'price_per_night': r.get('price_per_night'),
+                    'capacity': r.get('capacity'),
+                    'status': r.get('status')
+                })
+                if temp_room:
+                    temp_room.view_description = r.get('description')
+                    rooms_list.append(temp_room)
             rooms = rooms_list
             
             if not rooms:
@@ -145,26 +172,34 @@ def list_rooms():
                 'room_number': form.room_number.data # TRUYỀN room_number VÀO ĐÂY CŨNG
             }
             
-            sql_query_default = f"""
-                SELECT room_id, room_number, room_type, price_per_night, capacity, status, description
-                FROM get_available_rooms(
-                    :check_in_date, :check_out_date, :room_type, :min_price, :max_price, :min_capacity, :room_number
-                );
-            """
-            result_default = db.session.execute(db.text(sql_query_default), rooms_to_query).fetchall()
-            
+            response_default = supabase.rpc(
+                'get_available_rooms',
+                {
+                    'p_check_in_date': _to_iso(rooms_to_query['check_in_date']),
+                    'p_check_out_date': _to_iso(rooms_to_query['check_out_date']),
+                    'p_room_type': rooms_to_query['room_type'],
+                    'p_min_price': _to_json_value(rooms_to_query['min_price']),
+                    'p_max_price': _to_json_value(rooms_to_query['max_price']),
+                    'p_min_capacity': rooms_to_query['min_capacity'],
+                    'p_room_number': rooms_to_query['room_number']
+                }
+            ).execute()
+
+            _raise_on_error(response_default)
+
             rooms_list_default = []
-            for r in result_default:
-                temp_room = Room(
-                    room_id=r.room_id,
-                    room_number=r.room_number,
-                    room_type=r.room_type,
-                    price_per_night=r.price_per_night,
-                    capacity=r.capacity,
-                    status=r.status
-                )
-                temp_room.view_description = r.description
-                rooms_list_default.append(temp_room)
+            for r in response_default.data or []:
+                temp_room = Room.from_dict({
+                    'room_id': r.get('room_id'),
+                    'room_number': r.get('room_number'),
+                    'room_type': r.get('room_type'),
+                    'price_per_night': r.get('price_per_night'),
+                    'capacity': r.get('capacity'),
+                    'status': r.get('status')
+                })
+                if temp_room:
+                    temp_room.view_description = r.get('description')
+                    rooms_list_default.append(temp_room)
             rooms = rooms_list_default
 
         except Exception as e:
@@ -182,7 +217,10 @@ def book_room(room_id):
         flash('Your account is currently disabled or inactive. Please contact the administrator for details.', 'danger')
         return redirect(url_for('main.list_rooms'))
     
-    room = Room.query.get_or_404(room_id)
+    room_response = supabase.table('room').select('*').eq('room_id', room_id).maybe_single().execute()
+    if not room_response or not room_response.data:
+        abort(404)
+    room = Room.from_dict(room_response.data)
     form = BookingForm()
 
     if form.validate_on_submit():
@@ -200,41 +238,31 @@ def book_room(room_id):
             
             deposit_amount_param = form.deposit_amount.data if form.deposit_amount.data is not None else Decimal(0)
 
-            result = db.session.execute(
-                db.text("""
-                    SELECT booking_id, invoice_id, final_amount, message 
-                    FROM create_booking_with_invoice_fixed(
-                        :p_customer_id, 
-                        :p_room_id, 
-                        :p_check_in_date, 
-                        :p_check_out_date, 
-                        :p_special_requests, 
-                        :p_deposit_amount, 
-                        :p_promotion_code
-                    );
-                """),
+            response = supabase.rpc(
+                'create_booking_with_invoice_fixed',
                 {
                     'p_customer_id': current_user.customer_id,
                     'p_room_id': room_id,
-                    'p_check_in_date': form.check_in_date.data,
-                    'p_check_out_date': form.check_out_date.data,
+                    'p_check_in_date': _to_iso(form.check_in_date.data),
+                    'p_check_out_date': _to_iso(form.check_out_date.data),
                     'p_special_requests': form.special_requests.data,
-                    'p_deposit_amount': deposit_amount_param,
+                    'p_deposit_amount': _to_json_value(deposit_amount_param),
                     'p_promotion_code': promotion_code_param
                 }
-            ).fetchone() 
+            ).execute()
 
-            if result and result.booking_id: 
-                db.session.commit() 
-                flash(f'Your booking request was submitted successfully! (Booking ID: {result.booking_id}, Invoice: {result.invoice_id}, Total: {result.final_amount}).', 'success')
-                return redirect(url_for('main.booking_details', booking_id=result.booking_id))
+            _raise_on_error(response)
+
+            result = (response.data or [None])[0]
+
+            if result and result.get('booking_id'):
+                flash(f'Your booking request was submitted successfully! (Booking ID: {result.get("booking_id")}, Invoice: {result.get("invoice_id")}, Total: {result.get("final_amount")}).', 'success')
+                return redirect(url_for('main.booking_details', booking_id=result.get('booking_id')))
             else:
-                db.session.rollback() 
-                flash(f'Booking error: {result.message if result and result.message else "Unknown error from system. Please try again."}', 'danger')
+                flash(f'Booking error: {result.get("message") if result else "Unknown error from system. Please try again."}', 'danger')
                 return render_template('rooms/book_room.html', room=room, form=form) # Sửa đường dẫn template
 
         except Exception as e:
-            db.session.rollback() 
             flash(f'A system error occurred while creating the booking: {e}', 'danger')
             print(f"Error calling create_booking_with_invoice_fixed: {e}")
             return render_template('rooms/book_room.html', room=room, form=form) 
@@ -251,14 +279,51 @@ def book_room(room_id):
 @main_bp.route('/my_bookings')
 @login_required
 def my_bookings():
-    user_bookings = Booking.query.filter_by(customer_id=current_user.customer_id)\
-                                 .order_by(Booking.booking_date.desc()).all()
-    return render_template('customer/my_bookings.html', bookings=user_bookings)
+    response = supabase.table('booking') \
+        .select('*') \
+        .eq('customer_id', current_user.customer_id) \
+        .order('booking_date', desc=True) \
+        .execute()
+
+    bookings = []
+    for b in response.data or []:
+        booking = Booking.from_dict(b)
+        booking.check_in_date = _parse_date(booking.check_in_date)
+        booking.check_out_date = _parse_date(booking.check_out_date)
+        booking.booking_date = _parse_date(booking.booking_date)
+
+        room_response = supabase.table('room') \
+            .select('room_number, room_type') \
+            .eq('room_id', booking.room_id) \
+            .maybe_single() \
+            .execute()
+
+        invoice_response = supabase.table('invoice') \
+            .select('final_amount') \
+            .eq('booking_id', booking.booking_id) \
+            .maybe_single() \
+            .execute()
+
+        room_data = getattr(room_response, 'data', None) if room_response else None
+        invoice_data = getattr(invoice_response, 'data', None) if invoice_response else None
+
+        booking.room = Room.from_dict(room_data or {})
+        booking.invoice = Invoice.from_dict(invoice_data or {})
+
+        bookings.append(booking)
+
+    return render_template('customer/my_bookings.html', bookings=bookings)
 
 @main_bp.route('/booking_details/<int:booking_id>', methods=['GET', 'POST'])
 @login_required
 def booking_details(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
+    booking_response = supabase.table('booking').select('*').eq('booking_id', booking_id).maybe_single().execute()
+    if not booking_response or not booking_response.data:
+        abort(404)
+    booking = Booking.from_dict(booking_response.data)
+    booking.check_in_date = _parse_date(booking.check_in_date)
+    booking.check_out_date = _parse_date(booking.check_out_date)
+    booking.booking_date = _parse_date(booking.booking_date)
 
     if booking.customer_id != current_user.customer_id:
         flash('You do not have permission to access this booking.', 'danger')
@@ -280,17 +345,8 @@ def booking_details(booking_id):
             p_service_type = add_service_form.service_type.data if add_service_form.service_type.data else 'ADDITIONAL'
 
             try:
-                result = db.session.execute(
-                    db.text("""
-                        SELECT service_id, updated_final_amount, message
-                        FROM add_service_to_booking(
-                            :p_booking_id,
-                            :p_service_name,
-                            :p_service_description,
-                            :p_service_price,
-                            :p_service_type
-                        );
-                    """),
+                response = supabase.rpc(
+                    'add_service_to_booking',
                     {
                         'p_booking_id': booking.booking_id,
                         'p_service_name': p_service_name,
@@ -298,17 +354,18 @@ def booking_details(booking_id):
                         'p_service_price': p_service_price,
                         'p_service_type': p_service_type
                     }
-                ).fetchone()
+                ).execute()
 
-                if result and result.service_id:
-                    db.session.commit() 
-                    flash(f'Service "{p_service_name}" was added successfully! Invoice updated: {result.updated_final_amount:,.0f} VND. {result.message}', 'success')
+                _raise_on_error(response)
+
+                result = (response.data or [None])[0]
+
+                if result and result.get('service_id'):
+                    flash(f'Service "{p_service_name}" was added successfully! Invoice updated: {result.get("updated_final_amount"):,.0f} VND. {result.get("message")}', 'success')
                     return redirect(url_for('main.booking_details', booking_id=booking.booking_id))
                 else:
-                    db.session.rollback() 
-                    flash(f'Error adding service: {result.message if result and result.message else "Unknown error from system."}', 'danger')
+                    flash(f'Error adding service: {result.get("message") if result else "Unknown error from system."}', 'danger')
             except Exception as e:
-                db.session.rollback()
                 flash(f'A system error occurred while adding the service: {e}', 'danger')
                 print(f"Error calling add_service_to_booking: {e}")
 
@@ -321,72 +378,67 @@ def booking_details(booking_id):
             p_customer_id = current_user.customer_id
 
             try:
-                result = db.session.execute(
-                    db.text("""
-                        SELECT booking_id, message
-                        FROM cancel_booking_by_customer(
-                            :p_booking_id,
-                            :p_customer_id,
-                            :p_cancellation_reason
-                        );
-                    """),
+                response = supabase.rpc(
+                    'cancel_booking_by_customer',
                     {
                         'p_booking_id': booking.booking_id,
                         'p_customer_id': p_customer_id,
                         'p_cancellation_reason': p_cancellation_reason
                     }
-                ).fetchone()
+                ).execute()
 
-                if result and result.booking_id:
-                    db.session.commit() # Commit transaction
-                    flash(f'Booking {result.booking_id} was cancelled successfully! {result.message}', 'success')
+                _raise_on_error(response)
+
+                result = (response.data or [None])[0]
+
+                if result and result.get('booking_id'):
+                    flash(f'Booking {result.get("booking_id")} was cancelled successfully! {result.get("message")}', 'success')
                     return redirect(url_for('main.my_bookings')) 
                 else:
-                    db.session.rollback() 
-                    flash(f'Cancellation error: {result.message if result and result.message else "Unknown error from system."}', 'danger')
+                    flash(f'Cancellation error: {result.get("message") if result else "Unknown error from system."}', 'danger')
             except Exception as e:
-                db.session.rollback()
                 flash(f'A system error occurred while cancelling the booking: {e}', 'danger')
                 print(f"Error calling cancel_booking_by_customer: {e}")
     try:
-        sql_query_details = f"SELECT * FROM get_booking_details(:booking_id);"
-        print(f"Executing SQL query for booking_id: {booking.booking_id}") # DEBUG
-        booking_details_result = db.session.execute(
-            db.text(sql_query_details),
-            {'booking_id': booking.booking_id}
-        ).fetchone()
+        booking_details_response = supabase.rpc(
+            'get_booking_details',
+            {'p_booking_id': booking.booking_id}
+        ).execute()
 
-        print(f"Raw booking_details_result: {booking_details_result}") # DEBUG
+        _raise_on_error(booking_details_response)
+
+        booking_details_result = (booking_details_response.data or [None])[0]
 
         if booking_details_result is None:
             flash('No booking details or related invoice found.', 'warning')
             booking_details_dict = None
         else:
-            # Chuyển RowProxy object thành dict để dễ dàng truy cập trong template
-            # Cần đảm bảo các tên cột khớp với template của bạn
             booking_details_dict = {
-                'booking_id': booking_details_result.booking_id,
-                'customer_name': booking_details_result.customer_name,
-                'room_number': booking_details_result.room_number,
-                'room_type': booking_details_result.room_type,
-                'check_in_date': booking_details_result.check_in_date,
-                'check_out_date': booking_details_result.check_out_date,
-                'nights': booking_details_result.nights,
-                'room_price': booking_details_result.room_price,
-                'promotion_name': booking_details_result.promotion_name,
-                'total_room_amount': booking_details_result.total_room_amount,
-                'service_charges': booking_details_result.service_charges,
-                'tax_amount': booking_details_result.tax_amount,
-                'discount_amount': booking_details_result.discount_amount,
-                'final_amount': booking_details_result.final_amount,
-                'payment_status': booking_details_result.payment_status,
+                'booking_id': booking_details_result.get('booking_id'),
+                'customer_name': booking_details_result.get('customer_name'),
+                'room_number': booking_details_result.get('room_number'),
+                'room_type': booking_details_result.get('room_type'),
+                'check_in_date': _parse_date(booking_details_result.get('check_in_date')),
+                'check_out_date': _parse_date(booking_details_result.get('check_out_date')),
+                'nights': booking_details_result.get('nights'),
+                'room_price': booking_details_result.get('room_price'),
+                'promotion_name': booking_details_result.get('promotion_name'),
+                'total_room_amount': booking_details_result.get('total_room_amount'),
+                'service_charges': booking_details_result.get('service_charges'),
+                'tax_amount': booking_details_result.get('tax_amount'),
+                'discount_amount': booking_details_result.get('discount_amount'),
+                'final_amount': booking_details_result.get('final_amount'),
+                'payment_status': booking_details_result.get('payment_status'),
                 # Thêm các thuộc tính khác từ booking_details_result nếu cần,
                 # ví dụ: special_requests nếu bạn muốn lấy từ hàm SQL thay vì đối tượng Booking
             }
-            print(f"Converted booking_details_dict: {booking_details_dict}") # DEBUG
 
-        services = Service.query.filter_by(booking_id=booking.booking_id).all()
-        print(f"Services for booking_id {booking.booking_id}: {services}") # DEBUG
+        services_response = supabase.table('service') \
+            .select('*') \
+            .eq('booking_id', booking.booking_id) \
+            .execute()
+
+        services = [Service.from_dict(item) for item in (services_response.data or [])]
 
     except Exception as e:
         flash(f'Error loading booking details: {e}', 'danger')

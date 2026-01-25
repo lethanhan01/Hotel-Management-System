@@ -1,14 +1,16 @@
-from extensions import db
+class Service:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-class Service(db.Model):
-    __tablename__ = 'service'
-
-    service_id = db.Column(db.Integer, primary_key=True)
-    service_name = db.Column(db.String(100))
-    description = db.Column(db.String(500))
-    booking_id = db.Column(db.Integer, db.ForeignKey('booking.booking_id')) # FK tới Booking
-    price = db.Column(db.Numeric(10, 2))
-    service_type = db.Column(db.String(100))
+    @classmethod
+    def from_dict(cls, data):
+        if data is None:
+            return None
+        return cls(**data)
 
     def __repr__(self):
-        return f"<Service {self.service_name} ({self.service_id})>"
+        return f"<Service {getattr(self, 'service_name', None)} ({getattr(self, 'service_id', None)})>"
+
+    def __getattr__(self, name):
+        return None
