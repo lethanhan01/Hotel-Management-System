@@ -9,28 +9,12 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    # Allow overriding database URL via environment variable (e.g. on Vercel)
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL',
-        'postgresql://postgres:admin@localhost:5432/hotel_management'
-    )
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL',
-        'postgresql://postgres:admin@localhost:5432/hotel_management'
-    )
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 class ProductionConfig(Config):
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL',
-        'postgresql://postgres:admin@localhost:5432/hotel_management'
-    )
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 config = {
     'development': DevelopmentConfig,

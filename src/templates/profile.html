@@ -115,7 +115,13 @@
             </div>
             <div class="card-body">
                 <p><strong>Username:</strong> {{ current_user.username }}</p>
-                <p><strong>Registered on:</strong> {{ current_user.registration_date.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Registered on:</strong>
+                    {% if current_user.registration_date %}
+                        {{ current_user.registration_date.strftime('%d/%m/%Y') }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
                 <p><strong>Membership level:</strong> {{ current_user.membership_level }}</p>
                 <p><strong>Account status:</strong>
                     {% if current_user.account_status == 1 %}

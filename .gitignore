@@ -122,8 +122,8 @@ celerybeat.pid
 
 # Environments
 .env
-.env.example
 .venv
+.venv-cpy/
 env/
 venv/
 ENV/
@@ -169,13 +169,15 @@ cython_debug/
 *.sqlite
 *.sqlite3
 
+# Database dumps and SQL scripts
+Database/
+
 # Environment variables and sensitive configuration
 .env
 .env.local
 .env.development
 .env.test
 .env.production
-config.py
 
 # OS generated files
 .DS_Store
@@ -224,8 +226,9 @@ coverage.xml
 
 # Backup files
 *.backup
-Database\hotel_management.sql
-Database\20236018_Queries.sql
-Database\Create_database.sql
-Database\20235655_Queries.sql
-Database\20235631_Queries.sql
+Database/hotel_management.sql
+Database/20236018_Queries.sql
+Database/Create_database.sql
+Database/20235655_Queries.sql
+Database/20235631_Queries.sql
+Database

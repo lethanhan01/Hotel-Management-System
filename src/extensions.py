@@ -1,7 +1,15 @@
-from flask_sqlalchemy import SQLAlchemy
+import os
+from dotenv import load_dotenv
+from supabase import create_client, Client
 from flask_login import LoginManager
 
-db = SQLAlchemy()
+load_dotenv()
+
+supabase: Client = create_client(
+    os.environ.get("SUPABASE_URL"),
+    os.environ.get("SUPABASE_KEY")
+)
+
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login' # This is the destination when @login_required finds the user not logged in
 login_manager.login_message = "Please log in to access this page."
@@ -19,4 +27,10 @@ def load_user(user_id):
 #     # nếu bạn muốn giữ extensions.py chỉ khởi tạo db và manager
 #     # Để đơn giản, ta sẽ import Customer ngay tại đây
     from models.customer import Customer
-    return Customer.query.get(int(user_id))
+    try:
+        response = supabase.table('customer').select('*').eq('customer_id', int(user_id)).maybe_single().execute()
+        if response and response.data:
+            return Customer.from_dict(response.data)
+    except Exception:
+        return None
+    return None

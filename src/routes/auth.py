@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from forms.auth_form import LoginForm, RegisterForm
 from models.customer import Customer
-from extensions import db
+from extensions import supabase
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -13,7 +13,9 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = Customer.query.filter_by(username=form.username.data).first()
+        response = supabase.table('customer').select('*').eq('username', form.username.data).limit(1).execute()
+        user_data = response.data[0] if response.data else None
+        user = Customer.from_dict(user_data)
         if user is None or user.password != form.password.data:
             flash('Invalid username or password.', 'danger')
             return redirect(url_for('auth.login'))
@@ -44,18 +46,29 @@ def register():
             flash('Password confirmation does not match.', 'danger')
             return render_template('auth/register.html', form=form)
 
-        existing_user = Customer.query.filter_by(username=form.username.data).first()
-        if existing_user:
-            flash('Username already exists.', 'danger')
+        existing = supabase.table('customer') \
+            .select('customer_id') \
+            .or_(f"username.eq.{form.username.data},email.eq.{form.email.data}") \
+            .limit(1) \
+            .execute()
+
+        if existing.data:
+            flash('Username or email already exists.', 'danger')
             return render_template('auth/register.html', form=form)
 
-        new_customer = Customer(
-            username=form.username.data,
-            email=form.email.data,
-            password=form.password.data
-        )
-        db.session.add(new_customer)
-        db.session.commit()
+        insert_response = supabase.table('customer').insert({
+            'username': form.username.data,
+            'email': form.email.data,
+            'password': form.password.data,
+            'account_status': 1,
+            'membership_level': 0
+        }).execute()
+
+        insert_error = getattr(insert_response, 'error', None)
+        if insert_error:
+            message = getattr(insert_error, 'message', None) or str(insert_error)
+            flash(f'Registration failed: {message}', 'danger')
+            return render_template('auth/register.html', form=form)
 
         flash('Registration successful! You can log in now.', 'success')
         return redirect(url_for('auth.login'))
